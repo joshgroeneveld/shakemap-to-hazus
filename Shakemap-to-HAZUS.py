@@ -22,8 +22,9 @@ import wx
 import os
 import shutil
 import zipfile
+import arcpy
 
-# 1. Initialize wxpython window
+# Initialize wxpython window
 class MainFrame(wx.Frame):
     def __init__(self, parent):
         wx.Frame.__init__(self, parent, size=wx.Size(520, 520))
@@ -88,7 +89,7 @@ class MainFrame(wx.Frame):
 
         self.Show()
 
-    # 2. Select output directory
+    # Select output directory
     def select_output_directory(self, event):
         """This function allows the user to choose an output directory that will store
         the *.mdb file."""
@@ -100,7 +101,7 @@ class MainFrame(wx.Frame):
         dlg.Destroy()
         self.sb.SetStatusText("Select the location of your shape.zip file.")
 
-    # 3. Select the location of the shape.zip file
+    # Select the location of the shape.zip file
     def select_input_file(self, event):
         """This function allows the user to choose the location of the shape.zip file"""
         obj = event.GetEventObject()
@@ -108,7 +109,7 @@ class MainFrame(wx.Frame):
         self.input_file = path
         self.sb.SetStatusText("You chose %s" % self.input_file)
 
-    # 4. Extract the shape.zip file using the zipfile module
+    # Extract the shape.zip file using the zipfile module
     def extract_file(self, event):
         """This function takes the user input path to the shape.zip file and
         unzips it in the output directory."""
@@ -127,6 +128,22 @@ class MainFrame(wx.Frame):
         # Close the file
         fh.close()
         self.sb.SetStatusText("Unzipped shape.zip to %s" % outpath)
+        self.project_fcs(outpath)
+
+    # Reproject the files in the shape folder from WGS 84 to GCS_NAD83
+    def project_fcs(self, path):
+        """This function takes the unzipped shape folder and projects the four
+        feature classes HAZUS needs from WGS84 to GCS_NAD83."""
+        arcpy.env.workspace = path
+        fcs = arcpy.ListFeatureClasses()
+        for fc in fcs:
+            out_sr = arcpy.SpatialReference(4269)
+            fc_name = fc[:-4]
+            if fc_name in ["pga", "pgv", "psa03", "psa10"]:
+                fc_out_name = fc_name + "_GCS_NAD83.shp"
+                arcpy.management.Project(fc, fc_out_name, out_sr)
+                self.sb.SetStatusText("Projected: " + fc_name + " to GCS NAD83")
+
 
 try:
     app = wx.App(False)
