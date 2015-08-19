@@ -21,6 +21,7 @@ import traceback
 import wx
 import os
 import shutil
+import zipfile
 
 # 1. Initialize wxpython window
 class MainFrame(wx.Frame):
@@ -83,7 +84,7 @@ class MainFrame(wx.Frame):
     def select_output_directory(self, event):
         """This function allows the user to choose an output directory that will store
         the *.mdb file."""
-        dlg = wx.DirDialog(self, "Choose a directory:", style=wx.DD_DEFAULT_STYLE)
+        dlg = wx.DirDialog(self, "Choose a folder", style=wx.DD_DEFAULT_STYLE)
         dlg.Show()
         if dlg.ShowModal() == wx.ID_OK:
             self.output_directory = dlg.GetPath()
@@ -103,7 +104,17 @@ class MainFrame(wx.Frame):
     def extract_file(self, event):
         """This function takes the user input path to the shape.zip file and
         unzips it in the output directory."""
-        self.sb.SetStatusText("This button doesn't do anything...yet")
+        # Open the zip file
+        fh = open(self.input_file, 'rb')
+        # Create a ZipFile object
+        z = zipfile.ZipFile(fh)
+        # Go through each file in the zip archive and extract it
+        for name in z.namelist():
+            outpath = self.output_directory + "\\shape"
+            z.extract(name, outpath)
+        # Close the file
+        fh.close()
+        self.sb.SetStatusText("Unzipped shape.zip to %s" % outpath)
 
 try:
     app = wx.App(False)
