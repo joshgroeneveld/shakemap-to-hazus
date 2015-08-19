@@ -26,7 +26,7 @@ import zipfile
 # 1. Initialize wxpython window
 class MainFrame(wx.Frame):
     def __init__(self, parent):
-        wx.Frame.__init__(self, parent, size=wx.Size(520, 450))
+        wx.Frame.__init__(self, parent, size=wx.Size(520, 520))
 
         self.mainPanel = wx.Panel(self)
 
@@ -43,13 +43,17 @@ class MainFrame(wx.Frame):
         self.output_directory_staticbox = wx.StaticBox(self.mainPanel, -1, "Choose the output directory",
                                                 pos=wx.Point(8, 145), size=wx.Size(476, 55))
 
+        # earthquake name box
+        self.earthquakename_staticbox = wx.StaticBox(self.mainPanel, -1, "Type the earthquake name",
+                                                pos=wx.Point(8, 205), size=wx.Size(476, 60))
+
         # the shape.zip box
         self.serverinfo_staticbox = wx.StaticBox(self.mainPanel, -1, "Select the location of the shape.zip file",
-                                                pos=wx.Point(8, 200), size=wx.Size(476, 75))
+                                                pos=wx.Point(8, 270), size=wx.Size(476, 75))
 
         # the go button box
         self.go_button_staticbox = wx.StaticBox(self.mainPanel, -1,
-                                                pos=wx.Point(8, 280), size=wx.Size(476, 100))
+                                                pos=wx.Point(8, 350), size=wx.Size(476, 100))
 
         # welcome text
         welcomemessage = "The hazus.zip file that comes with a standard USGS ShakeMap product has average ground" \
@@ -67,14 +71,18 @@ class MainFrame(wx.Frame):
         self.output_directory = ""
         self.output_directory_dialog_button.Bind(wx.EVT_BUTTON, self.select_output_directory)
 
+        # Set up a text control for the earthquake name
+        self.earthquake_name_box = wx.TextCtrl(self.mainPanel, -1, pos=wx.Point(20, 230), size=wx.Size(300, -1))
+        self.earthquake_name = ""
+
         # Create a file picker to choose the location of the shape.zip file
-        self.input_file_button = wx.FilePickerCtrl(self.mainPanel, pos=wx.Point(20, 230), size=wx.Size(450, -1),
+        self.input_file_button = wx.FilePickerCtrl(self.mainPanel, pos=wx.Point(20, 300), size=wx.Size(450, -1),
                                         wildcard="*.zip")
         self.input_file = ""
         self.input_file_button.Bind(wx.EVT_FILEPICKER_CHANGED, self.select_input_file)
 
         # Create a button that executes the process to extract the shape.zip file
-        self.extract_file_button = wx.Button(self.mainPanel, label="Go!", pos=wx.Point(20, 300),
+        self.extract_file_button = wx.Button(self.mainPanel, label="Go!", pos=wx.Point(20, 370),
                                         size=wx.Size(150, 60))
         self.Bind(wx.EVT_BUTTON, self.extract_file, self.extract_file_button)
 
@@ -104,13 +112,17 @@ class MainFrame(wx.Frame):
     def extract_file(self, event):
         """This function takes the user input path to the shape.zip file and
         unzips it in the output directory."""
+        # Capture the earthquake name
+        self.earthquake_name = str(self.earthquake_name_box.GetValue())
+        # If the earthquake name has spaces in it, replace with underscores
+        self.earthquake_name = self.earthquake_name.replace(" ", "_")
         # Open the zip file
         fh = open(self.input_file, 'rb')
         # Create a ZipFile object
         z = zipfile.ZipFile(fh)
         # Go through each file in the zip archive and extract it
         for name in z.namelist():
-            outpath = self.output_directory + "\\shape"
+            outpath = self.output_directory + "\\" + self.earthquake_name + "\\shape"
             z.extract(name, outpath)
         # Close the file
         fh.close()
