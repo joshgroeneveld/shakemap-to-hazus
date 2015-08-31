@@ -4,7 +4,7 @@
 
 # Author: Josh Groeneveld
 # Created On: 08.17.2015
-# Updated On: 08.19.2015
+# Updated On: 08.31.2015
 # Copyright: 2015
 
 """NOTES: This script assumes that the shape.zip file has been downloaded
@@ -23,6 +23,7 @@ import os
 import shutil
 import zipfile
 import arcpy
+import inspect
 
 # Initialize wxpython window
 class MainFrame(wx.Frame):
@@ -143,6 +144,31 @@ class MainFrame(wx.Frame):
                 fc_out_name = fc_name + "_GCS_NAD83.shp"
                 arcpy.management.Project(fc, fc_out_name, out_sr)
                 self.sb.SetStatusText("Projected: " + fc_name + " to GCS NAD83")
+        self.copy_template()
+
+    # Copy the template shakemap geodatabase to a Data folder in the
+    # same directory as the earthquake name
+    def copy_template(self):
+        """This function copies a template geodatabase with empty data layers
+        for PGA, PGV, PSA03, and PSA10 into the same directory as the
+        earthquake name."""
+        temp = inspect.stack()[0][1]
+        script_dir = temp.replace('Shakemap-to-HAZUS.py', "Template")
+        earthquake_dir = self.output_directory + "\\" + self.earthquake_name + "\\Data"
+        shutil.copytree(script_dir, earthquake_dir)
+        self.sb.SetStatusText("Copied template shakemap to " + earthquake_dir)
+        self.rename_template(earthquake_dir)
+
+    # Rename the template shakemap to match the earthquake name
+    def rename_template(self, earthquake_dir):
+        """This function expects a string that is a path to the output earthquake
+        directory, then renames the template shakemap geodatabase based on the
+        earthquake name."""
+        os.chdir(earthquake_dir)
+        for filename in os.listdir(os.getcwd()):
+            if filename.endswith(".mdb"):
+                os.rename(filename, filename.replace("Template_Shakemap", self.earthquake_name))
+        self.sb.SetStatusText("Renamed template Shakemap to: " + self.earthquake_name + ".mdb")
 
 
 try:
